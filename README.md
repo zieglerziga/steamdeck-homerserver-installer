@@ -48,8 +48,8 @@ explicit privileged step: it creates `arrsvc:media`, `/srv/arr`, the single
 files it replaces under `/srv/arr/managed-backups`, enables boot services, but
 does not start the stack or restart logind.
 
-On first qBittorrent start, read its temporary password locally from
-`sudo docker logs qbittorrent`, configure a permanent password in its Web UI,
+On first qBittorrent start, read its temporary password locally with
+`sudo docker compose --env-file .env -f compose.yaml logs qbittorrent`, configure a permanent password in its Web UI,
 and do not paste either password into an issue or shell history. Then run:
 
 ```bash
