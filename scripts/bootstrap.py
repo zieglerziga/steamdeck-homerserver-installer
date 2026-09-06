@@ -142,29 +142,60 @@ def configure_arr(api: Api, kind: str, qbit_user: str, qbit_password: str) -> No
         definition["preferredSize"] = min(float(definition.get("preferredSize", 68.27)), 68.27)
     api.request("PUT", "qualitydefinition/update", definitions)
     format_scores = configure_formats(api)
-    for profile in api.request("GET", "qualityprofile"):
-        profile["upgradeAllowed"] = False
-        current = {item["format"]: item for item in profile.get("formatItems", [])}
-        for format_id, score in format_scores.items():
-            current[format_id] = {"format": format_id, "score": score}
-        profile["formatItems"] = list(current.values())
-        profile["minFormatScore"] = max(0, int(profile.get("minFormatScore", 0)))
+    profiles = api.request("GET", "qualityprofile")
+    managed = [profile for profile in profiles if profile.get("name") == "managed-720p-1080p"]
+    if len(managed) > 1:
+        raise BootstrapError("conflict: multiple quality profiles named managed-720p-1080p")
+    if not profiles:
+        raise BootstrapError("no source quality profile is available")
+    profile = copy.deepcopy(managed[0] if managed else profiles[0])
+    profile["name"] = "managed-720p-1080p"
+    profile["upgradeAllowed"] = False
+    set_allowed_resolutions(profile.get("items", []))
+    current = {item["format"]: item for item in profile.get("formatItems", [])}
+    for format_id, score in format_scores.items():
+        current[format_id] = {"format": format_id, "score": score}
+    profile["formatItems"] = list(current.values())
+    profile["minFormatScore"] = max(0, int(profile.get("minFormatScore", 0)))
+    if managed:
         api.request("PUT", f"qualityprofile/{profile['id']}", profile)
+    else:
+        profile.pop("id", None)
+        api.request("POST", "qualityprofile", profile)
+
+
+def set_allowed_resolutions(items: list[dict]) -> None:
+    for item in items:
+        children = item.get("items", [])
+        if children:
+            set_allowed_resolutions(children)
+            item["allowed"] = any(child.get("allowed", False) for child in children)
+            continue
+        resolution = int(item.get("quality", {}).get("resolution", 0))
+        item["allowed"] = resolution in (720, 1080)
 
 
 def configure_formats(api: Api) -> dict[int, int]:
-    specification = find_schema(api.request("GET", "customformat/schema"), "releasetitle")
+    schemas = api.request("GET", "customformat/schema")
+    specification = find_schema(schemas, "releasetitle")
     formats = {
-        "managed-reject-unsupported-video": (
-            r"(?i)(?:\b(?:x|h)[ ._-]?265\b|\bhevc\b|\bav1\b|\b2160p\b|\b4k\b|\bremux\b)",
-            -10000,
-        ),
-        "managed-prefer-h264": (r"(?i)\b(?:x264|h[ ._-]?264|avc)\b", 100),
+        "managed-reject-unsupported-video": (specification, r"(?i)(?:\b(?:x|h)[ ._-]?265\b|\bhevc\b|\bav1\b|\b2160p\b|\b4k\b|\bremux\b)", -10000),
+        "managed-prefer-h264": (specification, r"(?i)\b(?:x264|h[ ._-]?264|avc)\b", 100),
     }
+    language_schemas = [schema for schema in schemas if "language" in str(schema.get("implementation", "")).casefold()]
+    if language_schemas:
+        language = language_schemas[0]
+        value_field = next((field for field in language.get("fields", []) if field.get("name") == "value"), None)
+        original = next(
+            (option.get("value") for option in (value_field or {}).get("selectOptions", []) if option.get("name", "").casefold() == "original"),
+            None,
+        )
+        if original is not None:
+            formats["managed-prefer-original-audio"] = (language, original, 200)
     scores = {}
     existing = api.request("GET", "customformat")
-    for name, (pattern, score) in formats.items():
-        spec = copy.deepcopy(specification)
+    for name, (source_schema, pattern, score) in formats.items():
+        spec = copy.deepcopy(source_schema)
         spec["name"] = name
         set_field(spec, "value", pattern)
         desired = {

@@ -20,7 +20,7 @@ require_command() {
 load_env() {
   [[ -f "$ENV_FILE" ]] || die "missing $ENV_FILE; copy .env.example and edit it"
   # Values are restricted before sourcing to avoid treating .env as a shell script.
-  if grep -Ev '^(#|$|[A-Z][A-Z0-9_]*=[A-Za-z0-9_./:+-]+)$' "$ENV_FILE" | grep -q .; then
+  if grep -Ev '^(#.*|$|[A-Z][A-Z0-9_]*=[A-Za-z0-9_./:+-]+)$' "$ENV_FILE" | grep -q .; then
     die "$ENV_FILE contains unsupported syntax"
   fi
   set -a
@@ -32,4 +32,3 @@ load_env() {
 require_root() {
   [[ ${EUID:-$(id -u)} -eq 0 ]] || die "run this command through sudo"
 }
-

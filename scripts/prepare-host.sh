@@ -5,12 +5,15 @@ source "$(dirname -- "$0")/lib/common.sh"
 
 require_root
 load_env
-for command in docker btrfs install systemctl getent useradd groupadd; do
+for command in docker btrfs install systemctl getent useradd groupadd ufw; do
   require_command "$command"
 done
 
 backup_dir=/srv/arr/managed-backups/host-$(date -u +%Y%m%dT%H%M%SZ)
 install -d -m 0700 "$backup_dir"
+for ufw_rules in /etc/ufw/user.rules /etc/ufw/user6.rules; do
+  [[ ! -e $ufw_rules ]] || cp -a -- "$ufw_rules" "$backup_dir/$(basename -- "$ufw_rules")"
+done
 
 if getent group media >/dev/null; then
   [[ $(getent group media | cut -d: -f3) == "$MEDIA_GID" ]] || die "group media exists with a different GID"
@@ -73,6 +76,9 @@ install_managed "$PROJECT_ROOT/scripts/lib/common.sh" /usr/local/libexec/lib/com
 install_managed "$work_dir/arr-server.conf" /etc/samba/arr-server.conf 0600
 install_managed "$PROJECT_ROOT/systemd/arr-smb.service" /etc/systemd/system/arr-smb.service
 install_managed "$PROJECT_ROOT/compose.yaml" /usr/local/share/arr-server/compose.yaml
+
+ufw allow proto tcp from "$LAN_CIDR" to "$LAN_IP" port 445 comment 'arr-smb-lan'
+ufw deny proto tcp from any to "$LAN_IP" port 445 comment 'arr-smb-non-lan'
 
 systemctl daemon-reload
 systemctl enable docker.service arr-firewall.service arr-server.service arr-smb.service arr-ac-inhibit.service arr-disk-guard.service

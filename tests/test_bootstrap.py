@@ -21,6 +21,22 @@ class FakeApi:
 
 
 class BootstrapTest(unittest.TestCase):
+    def test_quality_filter_keeps_only_720p_and_1080p(self):
+        items = [
+            {"quality": {"resolution": 2160}, "allowed": True},
+            {"quality": {"resolution": 1080}, "allowed": False},
+            {"items": [
+                {"quality": {"resolution": 720}, "allowed": False},
+                {"quality": {"resolution": 480}, "allowed": True},
+            ], "allowed": False},
+        ]
+        bootstrap.set_allowed_resolutions(items)
+        self.assertFalse(items[0]["allowed"])
+        self.assertTrue(items[1]["allowed"])
+        self.assertTrue(items[2]["allowed"])
+        self.assertTrue(items[2]["items"][0]["allowed"])
+        self.assertFalse(items[2]["items"][1]["allowed"])
+
     def test_upsert_updates_one_stable_record(self):
         api = FakeApi([{"id": 7, "name": "managed", "implementation": "Thing"}])
         bootstrap.upsert_named(api, "items", {"name": "managed", "implementation": "Thing"}, "managed")
@@ -42,4 +58,3 @@ class BootstrapTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
