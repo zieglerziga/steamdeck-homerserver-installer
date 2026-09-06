@@ -1,0 +1,16 @@
+[Unit]
+Description=ARR media service stack
+Requires=docker.service arr-firewall.service
+After=docker.service arr-firewall.service local-fs.target
+RequiresMountsFor=/srv/arr/data
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/usr/local/share/arr-server
+ExecStart=/usr/bin/docker compose --env-file /srv/arr/deployment.env -f compose.yaml up -d
+ExecStop=/usr/bin/docker compose --env-file /srv/arr/deployment.env -f compose.yaml stop
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

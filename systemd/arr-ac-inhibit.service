@@ -1,0 +1,12 @@
+[Unit]
+Description=Prevent idle suspend while ARR server is on AC power
+
+[Service]
+Type=simple
+ExecStart=/usr/local/libexec/arr-ac-inhibit
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,14 @@
+[Unit]
+Description=Restrict ARR Docker publications to the configured LAN
+Requires=docker.service
+After=docker.service
+Before=arr-server.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/libexec/arr-firewall apply @LAN_IP@ @LAN_CIDR@ @PEER_PORT@
+ExecStop=/usr/local/libexec/arr-firewall remove @LAN_IP@ @LAN_CIDR@ @PEER_PORT@
+
+[Install]
+WantedBy=multi-user.target

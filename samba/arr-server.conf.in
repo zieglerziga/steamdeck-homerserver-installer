@@ -1,0 +1,21 @@
+[global]
+   server role = standalone server
+   security = user
+   map to guest = never
+   interfaces = lo @LAN_IP@
+   bind interfaces only = yes
+   smb ports = 445
+   disable netbios = yes
+   server min protocol = SMB2_10
+   log file = /var/log/samba/arr-%m.log
+   max log size = 1000
+
+[library]
+   path = /srv/arr/data/library
+   valid users = arrsvc
+   read only = yes
+   browseable = yes
+   guest ok = no
+   follow symlinks = no
+   wide links = no
+

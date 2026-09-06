@@ -1,0 +1,14 @@
+[Unit]
+Description=ARR read-only Samba server
+After=network-online.target local-fs.target
+RequiresMountsFor=/srv/arr/data/library
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/smbd --foreground --no-process-group --configfile=/etc/samba/arr-server.conf
+ExecReload=/bin/kill -HUP $MAINPID
+LimitNOFILE=16384
+
+[Install]
+WantedBy=multi-user.target
+
