@@ -1,0 +1,16 @@
+# Local operator configuration and credentials
+.env
+config/
+secrets/
+
+# Generated runtime, backups, and reports
+state/
+backups/
+reports/
+*.log
+
+# Tool caches
+.pytest_cache/
+__pycache__/
+*.pyc
+
