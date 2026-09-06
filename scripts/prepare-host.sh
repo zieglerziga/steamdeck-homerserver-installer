@@ -62,16 +62,21 @@ install_managed "$work_dir/arr-server.service" /etc/systemd/system/arr-server.se
 install_managed "$work_dir/arr-firewall.service" /etc/systemd/system/arr-firewall.service
 install_managed "$PROJECT_ROOT/systemd/arr-ac-inhibit.service" /etc/systemd/system/arr-ac-inhibit.service
 install_managed "$PROJECT_ROOT/systemd/arr-disk-guard.service" /etc/systemd/system/arr-disk-guard.service
+install_managed "$PROJECT_ROOT/systemd/arr-backup.service" /etc/systemd/system/arr-backup.service
+install_managed "$PROJECT_ROOT/systemd/arr-backup.timer" /etc/systemd/system/arr-backup.timer
 install_managed "$PROJECT_ROOT/systemd/logind-arr.conf" /etc/systemd/logind.conf.d/70-arr-server.conf
 install_managed "$PROJECT_ROOT/scripts/arr-firewall.sh" /usr/local/libexec/arr-firewall 0755
 install_managed "$PROJECT_ROOT/scripts/ac-inhibit.sh" /usr/local/libexec/arr-ac-inhibit 0755
 install_managed "$PROJECT_ROOT/scripts/disk_guard.py" /usr/local/libexec/arr-disk-guard 0755
+install_managed "$PROJECT_ROOT/scripts/backup.sh" /usr/local/libexec/arr-backup 0755
+install_managed "$PROJECT_ROOT/scripts/lib/common.sh" /usr/local/libexec/lib/common.sh 0755
 install_managed "$work_dir/arr-server.conf" /etc/samba/arr-server.conf 0600
 install_managed "$PROJECT_ROOT/systemd/arr-smb.service" /etc/systemd/system/arr-smb.service
 install_managed "$PROJECT_ROOT/compose.yaml" /usr/local/share/arr-server/compose.yaml
 
 systemctl daemon-reload
 systemctl enable docker.service arr-firewall.service arr-server.service arr-smb.service arr-ac-inhibit.service arr-disk-guard.service
+systemctl enable arr-backup.timer
 info "host prepared; previous managed files (if any) are in $backup_dir"
 info "set the Samba password with: sudo smbpasswd -a arrsvc"
 info "start services explicitly with: sudo systemctl start arr-server arr-smb arr-ac-inhibit"

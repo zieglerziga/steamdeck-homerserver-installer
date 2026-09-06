@@ -1,0 +1,8 @@
+[Unit]
+Description=Consistent ARR application-state backup
+After=arr-server.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/arr-backup
+
