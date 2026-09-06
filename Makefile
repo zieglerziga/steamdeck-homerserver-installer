@@ -1,10 +1,13 @@
 SHELL := /usr/bin/env bash
 COMPOSE := sudo docker compose --env-file .env -f compose.yaml
 
-.PHONY: help preflight prepare configure deploy verify stop backup restore upgrade
+.PHONY: help dependencies preflight prepare configure deploy verify guard-reset stop backup restore upgrade
 
 help:
-	@printf '%s\n' 'preflight prepare configure deploy verify stop backup restore upgrade'
+	@printf '%s\n' 'dependencies preflight prepare configure deploy verify guard-reset stop backup restore upgrade'
+
+dependencies:
+	@./scripts/install-dependencies.sh
 
 preflight:
 	@./scripts/preflight.sh
@@ -21,6 +24,9 @@ deploy:
 verify:
 	@./scripts/verify.sh
 
+guard-reset:
+	@sudo --preserve-env=LAN_IP ./scripts/disk_guard.py reset
+
 stop:
 	@$(COMPOSE) stop
 
@@ -33,4 +39,3 @@ restore:
 
 upgrade:
 	@./scripts/upgrade.sh
-

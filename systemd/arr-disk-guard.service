@@ -1,0 +1,15 @@
+[Unit]
+Description=ARR low-disk download guard
+After=arr-server.service
+Requires=arr-server.service
+
+[Service]
+Type=simple
+EnvironmentFile=/srv/arr/deployment.env
+ExecStart=/usr/local/libexec/arr-disk-guard daemon
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
+
